@@ -1,0 +1,75 @@
+local Reset_Amount = 2 -- amounts of backpacks to open (must be sorted first to last to open, inside main backpack)
+
+local Offline_Time = 1 -- increase this is it resets at random points meanwhile online
+
+   
+
+function Self.isOffline()
+
+    local s = os.clock()
+
+    wait(200)
+
+    getSelfID()
+
+    if ((os.clock() - s) > Offline_Time) then
+
+        return true
+
+    end
+
+end
+
+   
+
+function OpenBackpacks(amount)
+
+    Cavebot.Stop()
+
+    Self.CloseContainers()
+
+    Self.OpenMainBackpack(true)
+
+    wait(500 + Self.Ping())
+
+    if #Container.GetAll() == 1 then
+
+        for slot, item in Container.GetFirst():iItems() do
+
+            if Item.isContainer(item.id) then
+
+                Container.GetFirst():UseItem(slot, false)
+
+                wait(500 + Self.Ping())
+
+                Container.GetLast():Minimize()
+
+                wait(100 + Self.Ping())
+
+            end
+
+            if #Container.GetAll() == amount then break end
+
+        end
+
+    end
+
+    if #Container.GetAll() ~= amount then
+
+        print('Backpack reset not complete, recursing.')
+
+        OpenBackpacks(amount)
+
+    end
+
+    Cavebot.Start()
+
+end
+
+   
+
+Module.New('BP_RESET', function()
+
+    if Self.isOffline() then OpenBackpacks(Reset_Amount) end
+
+end)
